@@ -1,11 +1,76 @@
 {
 	"types": {
+		"bool": "native",
+		"i32": "native",
+		"f64": "native",
 		"pstring": "native",
 		"string": [
 			"pstring",
 			{
 				"countType": "varint"
 			}
+		],
+		"position": [
+			"container",
+			[
+				{
+					"name": "x",
+					"type": "i32"
+				},
+				{
+					"name": "y",
+					"type": "i32"
+				}
+			]
+		],
+		"cursorPos": [
+			"container",
+			[
+				{
+					"name": "x",
+					"type": "f64"
+				},
+				{
+					"name": "y",
+					"type": "f64"
+				}
+			]
+		],
+		"userId": "string",
+		"localId": "varint",
+		"cursor": [
+			"container",
+			[
+				{
+					"name": "userId",
+					"type": "userId"
+				},
+				{
+					"name": "localId",
+					"type": "localId"
+				},
+				{
+					"name": "pos",
+					"type": "cursorPos"
+				}
+			]
+		],
+		"color": [
+			"container",
+			[
+				{
+					"name": "r",
+					"type": "u8"
+				},
+				{
+					"name": "g",
+					"type": "u8"
+				},
+				{
+					"name": "b",
+					"type": "u8"
+				}
+			]
 		]
 	},
 	"login": {
@@ -15,7 +80,11 @@
 					"container",
 					[
 						{
-							"name": "bob",
+							"name": "statusCode",
+							"type": "varint"
+						},
+						{
+							"name": "statusMessage",
 							"type": "string"
 						}
 					]
@@ -53,11 +122,19 @@
 		},
 		"toServer": {
 			"types": {
-				"packet_loginStart": [
+				"packet_login": [
 					"container",
 					[
 						{
-							"name": "bob",
+							"name": "guest",
+							"type": "bool"
+						},
+						{
+							"name": "token",
+							"type": "string"
+						},
+						{
+							"name": "worldName",
 							"type": "string"
 						}
 					]
@@ -72,7 +149,7 @@
 								{
 									"type": "varint",
 									"mappings": {
-										"0x00": "loginStart"
+										"0x00": "login"
 									}
 								}
 							]
@@ -84,7 +161,7 @@
 								{
 									"compareTo": "name",
 									"fields": {
-										"loginStart": "packet_loginStart"
+										"login": "packet_login"
 									}
 								}
 							]
@@ -97,12 +174,144 @@
 	"play": {
 		"toClient": {
 			"types": {
-				"packet_loginStart": [
+				"packet_worldData": [
 					"container",
 					[
 						{
-							"name": "bob",
+							"name": "worldName",
 							"type": "string"
+						},
+						{
+							"name": "cursors",
+							"type": [
+								"array",
+								{
+									"countType": "varint",
+									"type": "cursor"
+								}
+							]
+						}
+					]
+				],
+				"packet_clientData": [
+					"container",
+					[
+						{
+							"name": "userId",
+							"type": "userId"
+						},
+						{
+							"name": "localId",
+							"type": "localId"
+						},
+						{
+							"name": "pos",
+							"type": "cursorPos"
+						},
+						{
+							"name": "username",
+							"type": "string"
+						},
+						{
+							"name": "xp",
+							"type": "i32"
+						}
+					]
+				],
+				"packet_playerJoin": [
+					"container",
+					[
+						{
+							"name": "cursor",
+							"type": "cursor"
+						}
+					]
+				],
+				"packet_playerLeave": [
+					"container",
+					[
+						{
+							"name": "localId",
+							"type": "localId"
+						}
+					]
+				],
+				"packet_worldUpdate": [
+					"container",
+					[
+						{
+							"name": "cursors",
+							"type": [
+								"array",
+								{
+									"countType": "varint",
+									"type": [
+										"container",
+										[
+											{
+												"name": "localId",
+												"type": "localId"
+											},
+											{
+												"name": "pos",
+												"type": "cursorPos"
+											}
+										]
+									]
+								}
+							]
+						},
+						{
+							"name": "pixels",
+							"type": [
+								"array",
+								{
+									"countType": "varint",
+									"type": [
+										"container",
+										[
+											{
+												"name": "placer",
+												"type": "localId"
+											},
+											{
+												"name": "pos",
+												"type": "position"
+											},
+											{
+												"name": "color",
+												"type": "color"
+											}
+										]
+									]
+								}
+							]
+						}
+					]
+				],
+				"packet_chatMessage": [
+					"container",
+					[
+						{
+							"name": "message",
+							"type": "string"
+						}
+					]
+				],
+				"packet_userInfo": [
+					"container",
+					[
+						{
+							"name": "userId",
+							"type": "userId"
+						},
+						{
+							"name": "username",
+							"type": "string"
+						},
+						{
+							"name": "xp",
+							"type": "i32"
 						}
 					]
 				],
@@ -116,7 +325,13 @@
 								{
 									"type": "varint",
 									"mappings": {
-										"0x00": "loginStart"
+										"0x00": "worldData",
+										"0x01": "clientData",
+										"0x02": "playerJoin",
+										"0x03": "playerLeave",
+										"0x04": "worldUpdate",
+										"0x05": "chatMessage",
+										"0x06": "userInfo"
 									}
 								}
 							]
@@ -128,7 +343,13 @@
 								{
 									"compareTo": "name",
 									"fields": {
-										"loginStart": "packet_loginStart"
+										"worldData": "packet_worldData",
+										"clientData": "packet_clientData",
+										"playerJoin": "packet_playerJoin",
+										"playerLeave": "packet_playerLeave",
+										"worldUpdate": "packet_worldUpdate",
+										"chatMessage": "packet_chatMessage",
+										"userInfo": "packet_userInfo"
 									}
 								}
 							]
@@ -139,11 +360,62 @@
 		},
 		"toServer": {
 			"types": {
-				"packet_loginStart": [
+				"packet_switchWorld": [
 					"container",
 					[
 						{
-							"name": "bob",
+							"name": "worldName",
+							"type": "string"
+						}
+					]
+				],
+				"packet_useTool": [
+					"container",
+					[
+						{
+							"name": "tool",
+							"type": "varint"
+						},
+						{
+							"name": "options",
+							"type": [
+								"switch",
+								{
+									"compareTo": "tool",
+									"fields": {
+										"0": [
+											"container",
+											[
+												{
+													"name": "pos",
+													"type": "position"
+												},
+												{
+													"name": "color",
+													"type": "color"
+												}
+											]
+										]
+									}
+								}
+							]
+						}
+					]
+				],
+				"packet_move": [
+					"container",
+					[
+						{
+							"name": "pos",
+							"type": "cursorPos"
+						}
+					]
+				],
+				"packet_chatMessage": [
+					"container",
+					[
+						{
+							"name": "message",
 							"type": "string"
 						}
 					]
@@ -158,7 +430,10 @@
 								{
 									"type": "varint",
 									"mappings": {
-										"0x00": "loginStart"
+										"0x00": "switchWorld",
+										"0x01": "useTool",
+										"0x02": "move",
+										"0x03": "chatMessage"
 									}
 								}
 							]
@@ -170,7 +445,10 @@
 								{
 									"compareTo": "name",
 									"fields": {
-										"loginStart": "packet_loginStart"
+										"switchWorld": "packet_switchWorld",
+										"useTool": "packet_useTool",
+										"move": "packet_move",
+										"chatMessage": "packet_chatMessage"
 									}
 								}
 							]
